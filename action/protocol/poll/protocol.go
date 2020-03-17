@@ -123,7 +123,7 @@ func NewProtocol(
 		return nil, nil
 	}
 
-	if !genesisConfig.EnableGravityChainVoting || (electionCommittee == nil && stakingV2 == nil) {
+	if (!genesisConfig.EnableGravityChainVoting && !cfg.Chain.EnableStakingProtocol) || (electionCommittee == nil && stakingV2 == nil) {
 		delegates := genesisConfig.Delegates
 		if uint64(len(delegates)) < genesisConfig.NumDelegates {
 			return nil, errors.New("invalid delegate address in genesis block")

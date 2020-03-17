@@ -235,6 +235,7 @@ type (
 		GravityChainDB  DB               `yaml:"gravityChainDB"`
 		Committee       committee.Config `yaml:"committee"`
 
+		EnableStakingProtocol bool `yaml:"enableStakingProtocol"`
 		EnableTrielessStateDB bool `yaml:"enableTrielessStateDB"`
 		// EnableArchiveMode is only meaningful when EnableTrielessStateDB is false
 		EnableArchiveMode bool `yaml:"enableArchiveMode"`
@@ -249,8 +250,7 @@ type (
 		// PollInitialCandidatesInterval is the config for committee init db
 		PollInitialCandidatesInterval time.Duration `yaml:"pollInitialCandidatesInterval"`
 		// WorkingSetCacheSize is the max size of workingset cache in state factory
-		WorkingSetCacheSize   uint64 `yaml:"workingSetCacheSize"`
-		EnableStakingProtocol bool   `yaml: "enableStakingProtocol"`
+		WorkingSetCacheSize uint64 `yaml:"workingSetCacheSize"`
 	}
 
 	// Consensus is the config struct for consensus package

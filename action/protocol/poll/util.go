@@ -97,6 +97,14 @@ func validate(ctx context.Context, p Protocol, act action.Action) error {
 			msg := fmt.Sprintf(", %v vs %v (expected)",
 				proposedDelegates,
 				ds)
+			log.S().Debugf("proposed \n")
+			for _, d := range proposedDelegates {
+				log.S().Debugf("+%v\n", d)
+			}
+			log.S().Debugf("expected \n")
+			for _, d := range ds {
+				log.S().Debugf("+%v\n", d)
+			}
 			return errors.Wrap(ErrDelegatesNotAsExpected, msg)
 		}
 	}

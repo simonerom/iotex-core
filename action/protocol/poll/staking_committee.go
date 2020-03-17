@@ -215,6 +215,7 @@ func (sc *stakingCommittee) CalculateCandidatesByHeight(ctx context.Context, hei
 	} else {
 		// starting Fairbank height all candidates come from native staking V2
 		cand, err = sc.nativeStakingV2.ActiveCandidates(ctx)
+		log.S().Infof("use ActiveCandidates %+v\n %v \n", cand, err)
 		timer.End()
 		return cand, err
 	}
