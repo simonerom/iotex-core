@@ -11,7 +11,7 @@ require (
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.2
 	github.com/golang/snappy v0.0.1
-	github.com/gorilla/websocket v1.4.0
+	github.com/gorilla/websocket v1.4.1-0.20190629185528-ae1634f6a989
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/golang-lru v0.5.1
@@ -47,6 +47,6 @@ require (
 	gopkg.in/yaml.v2 v2.2.3
 )
 
-replace github.com/ethereum/go-ethereum => github.com/iotexproject/go-ethereum v0.3.1
+replace github.com/ethereum/go-ethereum => github.com/iotexproject/go-ethereum v0.0.1
 
 replace golang.org/x/xerrors => golang.org/x/xerrors v0.0.0-20190212162355-a5947ffaace3
