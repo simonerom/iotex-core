@@ -22,7 +22,6 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/iotexproject/go-pkgs/crypto"
 	"github.com/iotexproject/go-pkgs/hash"
 	"github.com/iotexproject/iotex-address/address"
 	"github.com/iotexproject/iotex-antenna-go/v2/account"
@@ -33,7 +32,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/iotexproject/iotex-core/pkg/log"
 )
@@ -49,16 +48,10 @@ type KeyPair struct {
 	SK string `yaml:"priKey"`
 }
 
-// AddressKey contains the encoded address and private key of an account
-type AddressKey struct {
-	EncodedAddr string
-	PriKey      crypto.PrivateKey
-}
-
 type injectProcessor struct {
 	api      iotexapi.APIServiceClient
 	nonces   *sync.Map
-	accounts []*AddressKey
+	accounts []account.Account
 }
 
 func newInjectionProcessor() (*injectProcessor, error) {
@@ -77,8 +70,9 @@ func newInjectionProcessor() (*injectProcessor, error) {
 	}
 	api := iotexapi.NewAPIServiceClient(conn)
 	p := &injectProcessor{
-		api:    api,
-		nonces: &sync.Map{},
+		api:      api,
+		nonces:   &sync.Map{},
+		accounts: make([]account.Account, 0),
 	}
 	p.randAccounts(injectCfg.randAccounts)
 
@@ -93,17 +87,14 @@ func newInjectionProcessor() (*injectProcessor, error) {
 }
 
 func (p *injectProcessor) randAccounts(num int) error {
-	addrKeys := make([]*AddressKey, 0, num)
 	for i := 0; i < num; i++ {
-		private, err := crypto.GenerateKey()
+		a, err := account.NewAccount()
 		if err != nil {
 			return err
 		}
-		a, _ := account.PrivateKeyToAccount(private)
 		p.nonces.Store(a.Address().String(), 1)
-		addrKeys = append(addrKeys, &AddressKey{PriKey: private, EncodedAddr: a.Address().String()})
+		p.accounts = append(p.accounts, a)
 	}
-	p.accounts = addrKeys
 	return nil
 }
 
@@ -118,33 +109,21 @@ func (p *injectProcessor) loadAccounts(keypairsPath string) error {
 	}
 
 	// Construct iotex addresses from loaded key pairs
-	addrKeys := make([]*AddressKey, 0)
+	addrKeys := make([]account.Account, 0)
 	for _, pair := range keypairs.Pairs {
-		pk, err := crypto.HexStringToPublicKey(pair.PK)
+		acc, err := account.HexStringToAccount(pair.SK)
 		if err != nil {
-			return errors.Wrap(err, "failed to decode public key")
+			return errors.Wrap(err, "failed to create account")
 		}
-		sk, err := crypto.HexStringToPrivateKey(pair.SK)
-		if err != nil {
-			return errors.Wrap(err, "failed to decode private key")
-		}
-		addr, err := address.FromBytes(pk.Hash())
-		if err != nil {
-			return err
-		}
-		p.nonces.Store(addr.String(), 0)
-		addrKeys = append(addrKeys, &AddressKey{EncodedAddr: addr.String(), PriKey: sk})
+		p.nonces.Store(acc.Address().String(), 0)
+		addrKeys = append(addrKeys, acc)
 	}
 
 	// send tokens
 	for i, r := range p.accounts {
 		sender := addrKeys[i%len(addrKeys)]
-		operatorAccount, _ := account.PrivateKeyToAccount(sender.PriKey)
-
-		recipient, _ := address.FromString(r.EncodedAddr)
-
-		c := iotex.NewAuthedClient(p.api, operatorAccount)
-		caller := c.Transfer(recipient, injectCfg.loadTokenAmount).SetGasPrice(injectCfg.transferGasPrice).SetGasLimit(injectCfg.transferGasLimit)
+		c := iotex.NewAuthedClient(p.api, sender)
+		caller := c.Transfer(r.Address(), injectCfg.loadTokenAmount).SetGasPrice(injectCfg.transferGasPrice).SetGasLimit(injectCfg.transferGasLimit)
 		if _, err := caller.Call(context.Background()); err != nil {
 			log.L().Error("Failed to inject.", zap.Error(err))
 		}
@@ -270,14 +249,13 @@ func (p *injectProcessor) pickAction() (iotex.SendActionCaller, error) {
 func (p *injectProcessor) executionCaller() (iotex.SendActionCaller, error) {
 	var nonce uint64
 	sender := p.accounts[rand.Intn(len(p.accounts))]
-	val, ok := p.nonces.Load(sender.EncodedAddr)
+	val, ok := p.nonces.Load(sender.Address().String())
 	if ok {
 		nonce = val.(uint64)
 	}
-	p.nonces.Store(sender.EncodedAddr, nonce+1)
+	p.nonces.Store(sender.Address().String(), nonce+1)
 
-	operatorAccount, _ := account.PrivateKeyToAccount(sender.PriKey)
-	c := iotex.NewAuthedClient(p.api, operatorAccount)
+	c := iotex.NewAuthedClient(p.api, sender)
 	address, _ := address.FromString(injectCfg.contract)
 	abiJSONVar, _ := abi.JSON(strings.NewReader(_abiStr))
 	contract := c.Contract(address, abiJSONVar)
@@ -287,40 +265,34 @@ func (p *injectProcessor) executionCaller() (iotex.SendActionCaller, error) {
 	binary.BigEndian.PutUint64(dataBuf, uint64(data))
 	dataHash := sha256.Sum256(dataBuf)
 
-	caller := contract.Execute("addHash", uint64(time.Now().Unix()), hex.EncodeToString(dataHash[:])).
+	return contract.Execute("addHash", uint64(time.Now().Unix()), hex.EncodeToString(dataHash[:])).
 		SetNonce(nonce).
 		SetAmount(injectCfg.executionAmount).
 		SetGasPrice(injectCfg.executionGasPrice).
-		SetGasLimit(injectCfg.executionGasLimit)
-
-	return caller, nil
+		SetGasLimit(injectCfg.executionGasLimit), nil
 }
 
 func (p *injectProcessor) transferCaller() (iotex.SendActionCaller, error) {
 	var nonce uint64
 	sender := p.accounts[rand.Intn(len(p.accounts))]
-	val, ok := p.nonces.Load(sender.EncodedAddr)
+	val, ok := p.nonces.Load(sender.Address().String())
 	if ok {
 		nonce = val.(uint64)
 	}
-	p.nonces.Store(sender.EncodedAddr, nonce+1)
-
-	operatorAccount, _ := account.PrivateKeyToAccount(sender.PriKey)
-	c := iotex.NewAuthedClient(p.api, operatorAccount)
-
-	recipient, _ := address.FromString(p.accounts[rand.Intn(len(p.accounts))].EncodedAddr)
+	p.nonces.Store(sender.Address().String(), nonce+1)
 
 	data := rand.Int63()
 	var dataBuf = make([]byte, 8)
 	binary.BigEndian.PutUint64(dataBuf, uint64(data))
 	dataHash := sha256.Sum256(dataBuf)
 
-	caller := c.Transfer(recipient, injectCfg.transferAmount).
+	c := iotex.NewAuthedClient(p.api, sender)
+	recipient := p.accounts[rand.Intn(len(p.accounts))].Address()
+	return c.Transfer(recipient, injectCfg.transferAmount).
 		SetPayload(dataHash[:]).
 		SetNonce(nonce).
 		SetGasPrice(injectCfg.transferGasPrice).
-		SetGasLimit(injectCfg.transferGasLimit)
-	return caller, nil
+		SetGasLimit(injectCfg.transferGasLimit), nil
 }
 
 // injectCmd represents the inject command

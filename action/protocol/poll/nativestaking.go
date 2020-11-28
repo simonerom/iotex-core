@@ -25,6 +25,11 @@ import (
 	"github.com/iotexproject/iotex-election/types"
 )
 
+// const
+const (
+	EtherErrUnmarshalEmptyString = "abi: attempting to unmarshall an empty string while arguments are expected"
+)
+
 var (
 	// ErrNoData is an error that there's no data in the contract
 	ErrNoData = errors.New("no data")
@@ -139,7 +144,7 @@ func (ns *NativeStaking) readBuckets(ctx context.Context, prevIndx, limit *big.I
 	// decode the contract read result
 	pygg := &pygg{}
 	if err = ns.abi.Unpack(pygg, "getActivePyggs", data); err != nil {
-		if err.Error() == "abi: unmarshalling empty output" {
+		if err.Error() == EtherErrUnmarshalEmptyString {
 			// no data in contract (one possible reason is that contract does not exist yet)
 			return nil, nil, ErrNoData
 		}

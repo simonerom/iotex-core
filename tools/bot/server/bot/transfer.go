@@ -12,8 +12,6 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/iotexproject/go-pkgs/crypto"
-	"github.com/iotexproject/iotex-address/address"
 	"github.com/iotexproject/iotex-antenna-go/v2/account"
 	"github.com/iotexproject/iotex-antenna-go/v2/iotex"
 	"github.com/iotexproject/iotex-proto/golang/iotexapi"
@@ -63,11 +61,11 @@ func (s *Transfer) Name() string {
 }
 
 func (s *Transfer) startTransfer() error {
-	sk, err := crypto.HexStringToPrivateKey(s.cfg.Xrc20.Signer)
+	acc, err := account.HexStringToAccount(s.cfg.Xrc20.Signer)
 	if err != nil {
 		return err
 	}
-	hs, err := s.transfer(sk)
+	hs, err := s.transfer(acc)
 	if err != nil {
 		return err
 	}
@@ -92,11 +90,8 @@ func (s *Transfer) checkAndAlert(hs string) {
 		return
 	}
 }
-func (s *Transfer) transfer(pri crypto.PrivateKey) (txhash string, err error) {
-	addr, err := address.FromBytes(pri.PublicKey().Hash())
-	if err != nil {
-		return
-	}
+func (s *Transfer) transfer(acc account.Account) (txhash string, err error) {
+	addr := acc.Address()
 	gasprice := big.NewInt(0).SetUint64(s.cfg.GasPrice)
 	nonce, err := grpcutil.GetNonce(s.cfg.API.URL, addr.String())
 	if err != nil {
@@ -112,12 +107,8 @@ func (s *Transfer) transfer(pri crypto.PrivateKey) (txhash string, err error) {
 		return
 	}
 	defer conn.Close()
-	acc, err := account.PrivateKeyToAccount(pri)
-	if err != nil {
-		return
-	}
-	cli := iotex.NewAuthedClient(iotexapi.NewAPIServiceClient(conn), acc)
 
+	cli := iotex.NewAuthedClient(iotexapi.NewAPIServiceClient(conn), acc)
 	shash, err := cli.Transfer(addr, amount).SetNonce(nonce).SetGasLimit(s.cfg.GasLimit).SetGasPrice(gasprice).Call(context.Background())
 	if err != nil {
 		return

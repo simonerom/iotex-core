@@ -13,16 +13,16 @@ require (
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.2
-	github.com/golang/snappy v0.0.1
+	github.com/golang/snappy v0.0.2-0.20200707131729-196ae77b8a26
 	github.com/gorilla/websocket v1.4.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/iotexproject/go-fsm v1.0.0
 	github.com/iotexproject/go-p2p v0.2.12
-	github.com/iotexproject/go-pkgs v0.1.2-0.20200523040337-5f1d9ddaa8ee
-	github.com/iotexproject/iotex-address v0.2.2
-	github.com/iotexproject/iotex-antenna-go/v2 v2.4.0
-	github.com/iotexproject/iotex-election v0.3.5-0.20201031050050-c3ab4f339a54
+	github.com/iotexproject/go-pkgs v0.1.5-0.20201128191740-3f9b55cbea9b
+	github.com/iotexproject/iotex-address v0.2.4
+	github.com/iotexproject/iotex-antenna-go/v2 v2.4.2-0.20201128212255-47b56404de90
+	github.com/iotexproject/iotex-election v0.3.5-0.20201129003725-9822ea89b6e3
 	github.com/iotexproject/iotex-proto v0.4.4-0.20201029172022-a8466422b0f1
 	github.com/libp2p/go-libp2p v0.0.21 // indirect
 	github.com/libp2p/go-libp2p-peerstore v0.0.5
@@ -36,22 +36,21 @@ require (
 	github.com/rs/zerolog v1.18.0
 	github.com/schollz/progressbar/v2 v2.15.0
 	github.com/spf13/cobra v1.1.1
-	github.com/stretchr/testify v1.5.1
-	github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d // indirect
+	github.com/stretchr/testify v1.6.1
 	github.com/tyler-smith/go-bip39 v1.0.2
 	go.etcd.io/bbolt v1.3.5
 	go.uber.org/automaxprocs v1.2.0
 	go.uber.org/config v1.3.1
 	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	golang.org/x/net v0.0.0-20200822124328-c89045814202
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 	google.golang.org/grpc v1.28.0
 	google.golang.org/protobuf v1.25.0
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v2 v2.3.0
 )
 
-replace github.com/ethereum/go-ethereum => github.com/iotexproject/go-ethereum v0.3.1
+replace github.com/ethereum/go-ethereum => github.com/iotexproject/go-ethereum v1.7.4-0.20201128085836-7508e8c277b8
 
 replace golang.org/x/xerrors => golang.org/x/xerrors v0.0.0-20190212162355-a5947ffaace3
