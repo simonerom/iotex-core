@@ -10,11 +10,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/pprof"
 	"sync/atomic"
 
-	"go.uber.org/zap"
-
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
 
 	"github.com/iotexproject/iotex-core/pkg/log"
 	"github.com/iotexproject/iotex-core/pkg/util/httputil"
@@ -61,6 +61,11 @@ func New(port int, opts ...Option) *Server {
 	mux.HandleFunc("/readiness", readiness)
 	mux.HandleFunc("/health", readiness)
 	mux.Handle("/metrics", promhttp.Handler())
+	mux.HandleFunc("/debug/pprof/", pprof.Index)
+	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	s.server = httputil.Server(fmt.Sprintf(":%d", port), mux)
 	return s
