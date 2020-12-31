@@ -131,7 +131,7 @@ var (
 			StateDBCacheSize:              1000,
 			WorkingSetCacheSize:           20,
 			EnableArchiveMode:             false,
-			RangeBloomFilterSize:          4096,
+			RangeBloomFilterSize:          10000,
 		},
 		ActPool: ActPool{
 			MaxNumActsPerPool:  32000,
