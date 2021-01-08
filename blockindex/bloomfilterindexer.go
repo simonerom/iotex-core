@@ -36,8 +36,8 @@ type (
 	// BloomFilterIndexer is the interface for bloomfilter indexer
 	BloomFilterIndexer interface {
 		blockdao.BlockIndexer
-		// RangeBloomFilterBlocks returns the number of blocks that each rangeBloomfilter includes
-		RangeBloomFilterBlocks() uint64
+		// RangeBloomFilterNumKeys returns the number of keys that each rangeBloomfilter includes
+		RangeBloomFilterNumKeys() uint64
 		// BlockFilterByHeight returns the block-level bloomfilter which includes not only topic but also address of logs info by given block height
 		BlockFilterByHeight(uint64) (bloom.BloomFilter, error)
 		// RangeFilterByHeight returns the range bloomfilter for the height
@@ -68,7 +68,7 @@ func NewBloomfilterIndexer(kv db.KVStore, cfg config.Indexer) (BloomFilterIndexe
 	}
 	return &bloomfilterIndexer{
 		flusher:   flusher,
-		rangeSize: cfg.RangeBloomFilterBlocks,
+		rangeSize: cfg.RangeBloomFilterNumKeys,
 		bfSize:    cfg.RangeBloomFilterSize,
 		bfNumHash: cfg.RangeBloomFilterNumHash,
 	}, nil
@@ -85,6 +85,7 @@ func (bfx *bloomfilterIndexer) Start(ctx context.Context) error {
 	switch errors.Cause(err) {
 	case nil:
 		tipHeight := byteutil.BytesToUint64(tipHeightData)
+		// TODO: change this condition
 		if tipHeight%bfx.rangeSize == 0 {
 			bfx.curRangeBloomfilter, _ = bloom.NewBloomFilter(bfx.bfSize, bfx.bfNumHash)
 		} else {
@@ -130,7 +131,8 @@ func (bfx *bloomfilterIndexer) PutBlock(ctx context.Context, blk *block.Block) (
 	if err := bfx.commit(blk.Height(), bfx.calculateBlockBloomFilter(ctx, blk.Receipts)); err != nil {
 		return err
 	}
-	if blk.Height()%bfx.rangeSize == 0 {
+	if bfx.curRangeBloomfilter.NumElements() >= bfx.rangeSize {
+		// TODO: add a new entry to RangeIndex
 		bfx.curRangeBloomfilter, err = bloom.NewBloomFilter(bfx.bfSize, bfx.bfNumHash)
 		if err != nil {
 			return errors.Wrapf(err, "Can not create new bloomfilter")
@@ -151,8 +153,8 @@ func (bfx *bloomfilterIndexer) DeleteTipBlock(blk *block.Block) (err error) {
 	return nil
 }
 
-// RangeBloomFilterBlocks returns the number of blocks that each rangeBloomfilter includes
-func (bfx *bloomfilterIndexer) RangeBloomFilterBlocks() uint64 {
+// RangeBloomFilterNumKeys returns the number of keys that each rangeBloomfilter includes
+func (bfx *bloomfilterIndexer) RangeBloomFilterNumKeys() uint64 {
 	bfx.mutex.RLock()
 	defer bfx.mutex.RUnlock()
 	return bfx.rangeSize
@@ -179,6 +181,7 @@ func (bfx *bloomfilterIndexer) FilterBlocksInRange(l *filter.LogFilter, start, e
 	if start == 0 || end == 0 {
 		return nil, errors.New("start/end height should be bigger than zero")
 	}
+	// TODO: change how to get range bf start/end
 	blockNumbers := make([]uint64, 0)
 	queryHeight := bfx.rangeBloomfilterKey(start)  // range which includes start
 	endQueryHeight := bfx.rangeBloomfilterKey(end) // range which includes end

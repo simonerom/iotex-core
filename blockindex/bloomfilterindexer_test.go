@@ -221,7 +221,7 @@ func TestBloomfilterIndexer(t *testing.T) {
 	testIndexer := func(kvStore db.KVStore, t *testing.T) {
 		ctx := context.Background()
 		cfg := config.Default.Indexer
-		cfg.RangeBloomFilterBlocks = 4
+		cfg.RangeBloomFilterNumKeys = 4
 		cfg.RangeBloomFilterSize = 4096
 		cfg.RangeBloomFilterNumHash = 4
 
@@ -232,7 +232,7 @@ func TestBloomfilterIndexer(t *testing.T) {
 			require.NoError(indexer.Stop(ctx))
 		}()
 
-		require.Equal(cfg.RangeBloomFilterBlocks, indexer.RangeBloomFilterBlocks())
+		require.Equal(cfg.RangeBloomFilterNumKeys, indexer.RangeBloomFilterNumKeys())
 
 		height, err := indexer.Height()
 		require.NoError(err)
@@ -240,7 +240,7 @@ func TestBloomfilterIndexer(t *testing.T) {
 
 		testinglf := logfilter.NewLogFilter(testFilter[2], nil, nil)
 
-		for i := 0; i < int(cfg.RangeBloomFilterBlocks)+1; i++ {
+		for i := 0; i < int(cfg.RangeBloomFilterNumKeys)+1; i++ {
 			require.NoError(indexer.PutBlock(context.Background(), blks[i]))
 			height, err := indexer.Height()
 			require.NoError(err)
@@ -260,15 +260,15 @@ func TestBloomfilterIndexer(t *testing.T) {
 		for i, l := range testFilter {
 			lf := logfilter.NewLogFilter(l, nil, nil)
 
-			res, err := indexer.FilterBlocksInRange(lf, uint64(1), cfg.RangeBloomFilterBlocks+1)
+			res, err := indexer.FilterBlocksInRange(lf, uint64(1), cfg.RangeBloomFilterNumKeys+1)
 			require.NoError(err)
 			require.Equal(expectedRes2[i], res)
 
-			res2, err := indexer.FilterBlocksInRange(lf, cfg.RangeBloomFilterBlocks, cfg.RangeBloomFilterBlocks+1)
+			res2, err := indexer.FilterBlocksInRange(lf, cfg.RangeBloomFilterNumKeys, cfg.RangeBloomFilterNumKeys+1)
 			require.NoError(err)
 			require.Equal(expectedRes3[i], res2)
 
-			res3, err := indexer.FilterBlocksInRange(lf, uint64(1), cfg.RangeBloomFilterBlocks-1)
+			res3, err := indexer.FilterBlocksInRange(lf, uint64(1), cfg.RangeBloomFilterNumKeys-1)
 			require.NoError(err)
 			require.Equal(expectedRes4[i], res3)
 		}

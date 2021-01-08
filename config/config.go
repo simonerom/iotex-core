@@ -199,7 +199,7 @@ var (
 			HistoryStateRetention: 2000,
 		},
 		Indexer: Indexer{
-			RangeBloomFilterBlocks:  10000,
+			RangeBloomFilterNumKeys: 100000,
 			RangeBloomFilterSize:    500000,
 			RangeBloomFilterNumHash: 12,
 		},
@@ -394,8 +394,8 @@ type (
 
 	// Indexer is the config for indexer
 	Indexer struct {
-		// RangeBloomFilterBlocks is the number of blocks each rangeBloomfilter will store in bloomfilterIndexer
-		RangeBloomFilterBlocks uint64 `yaml:"rangeBloomFilterBlocks"`
+		// RangeBloomFilterNumKeys is the number of keys each rangeBloomfilter will store in bloomfilterIndexer
+		RangeBloomFilterNumKeys uint64 `yaml:"rangeBloomFilterBlocks"`
 		// RangeBloomFilterSize is the size (in bits) of rangeBloomfilter
 		RangeBloomFilterSize uint64 `yaml:"rangeBloomFilterSize"`
 		// RangeBloomFilterNumHash is the number of hash functions of rangeBloomfilter
