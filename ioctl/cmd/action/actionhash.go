@@ -176,7 +176,7 @@ func printActionProto(action *iotextypes.Action) (string, error) {
 	}
 	result := fmt.Sprintf("\nversion: %d  ", action.Core.GetVersion()) +
 		fmt.Sprintf("nonce: %d  ", action.Core.GetNonce()) +
-		fmt.Sprintf("gasLimit: %d  ", action.Core.GasLimit) +
+		fmt.Sprintf("gasLimit: %d Rau ", action.Core.GasLimit) +
 		fmt.Sprintf("gasPrice: %s IOTX\n", gasPriceUnitIOTX) +
 		fmt.Sprintf("senderAddress: %s %s\n", senderAddress.String(),
 			Match(senderAddress.String(), "address"))
@@ -237,7 +237,7 @@ func printReceiptProto(receipt *iotextypes.Receipt) string {
 		Match(strconv.Itoa(int(receipt.Status)), "status")) +
 		fmt.Sprintf("actHash: %x\n", receipt.ActHash) +
 		fmt.Sprintf("blkHeight: %d\n", receipt.BlkHeight) +
-		fmt.Sprintf("gasConsumed: %d\n", receipt.GasConsumed) +
+		fmt.Sprintf("gasConsumed: %d Rau\n", receipt.GasConsumed) +
 		printLogs(receipt.Logs)
 	if len(receipt.ContractAddress) != 0 {
 		result += fmt.Sprintf("\ncontractAddress: %s %s", receipt.ContractAddress,
